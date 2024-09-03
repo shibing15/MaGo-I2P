@@ -1,0 +1,45 @@
+
+scheduler: {
+  type: CosLR,
+  kwargs: {
+    epochs: 300,
+    initial_epochs: 10
+  } }
+
+
+dataset: {
+  pi: 3.141592653589793,
+  P_tx_amplitude: 10,
+  P_ty_amplitude: 0,
+  P_tz_amplitude: 10,
+  P_Rx_amplitude: 2*math.pi*0,
+  P_Ry_amplitude: 2*math.pi,
+  P_Rz_amplitude: 2*math.pi*0,
+  
+  train: { _base_: cfgs/dataset_configs/ModelNet40.yaml,
+           others: { subset: 'train' } },
+  val: { _base_: cfgs/dataset_configs/ModelNet40.yaml,
+         others: { subset: 'test' } },
+  test: { _base_: cfgs/dataset_configs/ModelNet40.yaml,
+          others: { subset: 'test' } } }
+
+model: {
+  NAME: PointMamba,
+  trans_dim: 384,
+  depth: 12,
+  cls_dim: 40,
+  num_heads: 6,
+  group_size: 32,
+  num_group: 64,
+  encoder_dims: 384,
+  rms_norm: False,
+  drop_path: 0.3,
+  drop_out: 0.,
+}
+
+
+npoints: 1024
+total_bs: 32
+step_per_update: 1
+max_epoch: 300
+grad_norm_clip: 10

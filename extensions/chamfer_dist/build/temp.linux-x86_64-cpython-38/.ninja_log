@@ -1,0 +1,7 @@
+# ninja log v5
+0	16764	1724831900509140720	/home/ai-i-sunyunda/code/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer_cuda.o	a861031c9ad6fe30
+0	33087	1724831916842087579	/home/ai-i-sunyunda/code/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer.o	cab4de660ba35cb1
+11	47485	1725263698825893517	/home/sunyunda/code_i2p/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer_cuda.o	4f59798e3a383818
+8	102286	1725263753663830871	/home/sunyunda/code_i2p/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer.o	ce5a140cf0976e86
+54	43128	1725266201491478615	/home/sunyunda/code_i2p/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer_cuda.o	9f19d311851fb60d
+51	97166	1725266255552288562	/home/sunyunda/code_i2p/mambai2p/extensions/chamfer_dist/build/temp.linux-x86_64-cpython-38/chamfer.o	2a068bc9851830b0

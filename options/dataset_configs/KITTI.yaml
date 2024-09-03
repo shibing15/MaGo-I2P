@@ -1,0 +1,4 @@
+NAME: KITTI
+DATA_PATH: /media/ai-i-sunyunda/data/data/KITTI_for_DEEPI2P
+N_POINTS: 40960
+USE_NORMALS: FALSE

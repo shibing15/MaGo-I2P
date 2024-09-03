@@ -1,0 +1,4 @@
+NAME: Oxford
+DATA_PATH: /media/ai-i-sunyunda/data/data/oxford_for_i2p/
+N_POINTS: 40960
+USE_NORMALS: FALSE
