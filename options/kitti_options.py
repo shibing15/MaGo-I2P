@@ -5,7 +5,7 @@ import torch
 
 class KITTI_Options:
     def __init__(self):
-        self.save_path = '/home/sunyunda/code_i2p/mambai2p/runs/mamba_cir_cla'
+        self.save_path = '/home/sunyunda/code_i2p/mambai2p/runs/test'
 
         #dataset-----------------------------------------
         self.dataset_name = 'KITTI'
@@ -55,7 +55,7 @@ class KITTI_Options:
         self.fetch_idx = [3, 7, 11]
         #train-------------------------------------------------
         self.epoch = 25
-        self.train_batch_size = 8
+        self.train_batch_size = 2
         self.val_batch_size = 4
         self.num_workers = 8
         self.is_debug = False

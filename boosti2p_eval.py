@@ -1,17 +1,15 @@
 import numpy as np
 import cv2
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+import torch
+from model.network import MambaI2P_cla
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 from scipy.spatial.transform import Rotation
-import multiprocessing
 import argparse
-import logging
 from datasets.kitti.kitti_pc_img_dataloader import kitti_pc_img_dataset
 from datasets.oxford.siami2p_oxford_pc_img_dataloader import OxfordLoader
-import torch
-import torch.nn.functional as F
+from evalution.model_eval import Model_eval
 from options.kitti_options import KITTI_Options
-from model.network import MambaI2P
 import math
 import sys
 from tqdm import tqdm
@@ -250,9 +248,11 @@ def cal_acc(output_param_dict, model_output_dict, label_dict, data, t_error_list
     return acc_dict
 
 
-def test_model(model_path, model, test_dataloader, opt, dist):
+def test_model(model_path, model, test_dataloader, opt):
     t_error_list = []
     r_error_list = []
+    pc_coview_accuracy_list = []
+    pc_class_accuracy_list = []
     mask_list = []
     checkpoints = torch.load(model_path)
     model.load_state_dict(checkpoints)
@@ -260,10 +260,20 @@ def test_model(model_path, model, test_dataloader, opt, dist):
     with torch.no_grad():
         for data in tqdm(test_dataloader):
             model.eval()
-            output_param_dict, model_output_dict, label_dict = model_inference(model, data, opt)
-            acc_dict = cal_acc(output_param_dict, model_output_dict, label_dict, data, t_error_list, r_error_list, dist)
-            # print(acc_dict)
-    return t_error_list, r_error_list
+            model_eval = Model_eval(model, data, opt)
+
+            pc_coview_accuracy,\
+            pc_class_accuracy,\
+            t_diff, angles_diff = model_eval.forward()
+            
+            # print(t_diff, angles_diff)
+
+            t_error_list.append(t_diff)
+            r_error_list.append(angles_diff)
+            pc_coview_accuracy_list.append(pc_coview_accuracy)
+            pc_class_accuracy_list.append(pc_class_accuracy)
+            
+    return t_error_list, r_error_list, pc_coview_accuracy_list, pc_class_accuracy_list
 
 
 
@@ -271,13 +281,12 @@ def test_model(model_path, model, test_dataloader, opt, dist):
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Point Cloud Registration')
-    parser.add_argument('--val_batch_size', type=int, default=8, metavar='val_batch_size',
+    parser.add_argument('--val_batch_size', type=int, default=1, metavar='val_batch_size',
                         help='Size of val batch')
     parser.add_argument('--dataset', type=str, default='kitti', metavar='dataset')
-    parser.add_argument('--eval_method', type=str, default='point_max', metavar='dataset', help='point_max, norm or mutual_check')
-    parser.add_argument('--data_path', type=str, default='/media/ai-i-sunyunda/data/data/KITTI_for_DEEPI2P', metavar='data_path',
+    parser.add_argument('--data_path', type=str, default='/home/data/syd/KITTI_for_DEEPI2P', metavar='data_path',
                         help='train and test data path')
-    parser.add_argument('--num_point', type=int, default=20480, metavar='num_point',
+    parser.add_argument('--num_point', type=int, default=40960, metavar='num_point',
                         help='point cloud size to train')
     parser.add_argument('--num_workers', type=int, default=8, metavar='num_workers',
                         help='num of CPUs')
@@ -301,8 +310,6 @@ if __name__=='__main__':
                         help='')
     parser.add_argument('--test_model_path', type=str, default=None, metavar='test_model_path',
                         help='')
-    parser.add_argument('--dist', type=str, default='cor', metavar='dist',
-                        help='correlation(cor) or cosine distance(cos)')
     args = parser.parse_args()
     
     if args.dataset == 'kitti':
@@ -326,7 +333,8 @@ if __name__=='__main__':
     assert len(test_dataset) > 10
     testloader=torch.utils.data.DataLoader(test_dataset,batch_size=args.val_batch_size,shuffle=False,drop_last=True,num_workers=args.num_workers)
     
-    model=MambaI2P(opt)
+    model=MambaI2P_cla(opt)
+    model = model.cuda()
     modellist = []
     if args.test_model_path != None:
         filelist = os.listdir(args.test_model_path)
@@ -339,16 +347,22 @@ if __name__=='__main__':
         print(modellist, ' will be test')
         for checkpoint in modellist:
             save_add = checkpoint.split('.')
-            if os.path.exists(os.path.join(args.test_model_path,save_add[0] + '_t_error_' + args.eval_method + '_%s'%args.dist + '.npy')):
-                
+            if os.path.exists(os.path.join(args.test_model_path,save_add[0] + '_t_error' + '.npy')):
                 print(checkpoint, ' done!')
                 continue
-            print(os.path.join(args.test_model_path,save_add[0] + '_t_error_' + args.eval_method + '_%s'%args.dist + '.npy'))
+            print(os.path.join(args.test_model_path,save_add[0] + '_t_error_' + '.npy'))
             print(checkpoint, ' test start!!')
             checkpoint_path = os.path.join(args.test_model_path, checkpoint)
-            t_error_list, r_error_list = test_model(checkpoint_path, model, testloader, opt, args.dist)
-            np.save(os.path.join(args.test_model_path,save_add[0] + '_t_error_point_max'+'_%s.npy'%args.dist), t_error_list)
-            np.save(os.path.join(args.test_model_path,save_add[0] + '_r_error_point_max'+'_%s.npy'%args.dist), r_error_list)
+
+            t_error_list, \
+            r_error_list, \
+            pc_coview_accuracy_list, \
+            pc_class_accuracy_list = test_model(checkpoint_path, model, testloader, opt)
+
+            np.save(os.path.join(args.test_model_path,save_add[0] + '_t_error'+'.npy'), t_error_list)
+            np.save(os.path.join(args.test_model_path,save_add[0] + '_r_error'+'.npy'), r_error_list)
+            np.save(os.path.join(args.test_model_path,save_add[0] + '_coview_acc'+'.npy'),pc_coview_accuracy_list)
+            np.save(os.path.join(args.test_model_path,save_add[0] + '_cla_acc'+'.npy'), pc_class_accuracy_list)
             print(checkpoint, ' done!')
             #check if there are any new models have done
             filelist = os.listdir(args.test_model_path)

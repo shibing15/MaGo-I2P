@@ -2,17 +2,13 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import torch
 import torch.nn as nn
-import argparse
 from model.network import MambaI2P_cla
-
 from datasets.kitti.kitti_pc_img_dataloader import kitti_pc_img_dataset
 from options.kitti_options import KITTI_Options
 # import loss
 from model.loss import  det_loss2, siam_loss, desc_loss
 import numpy as np
 import logging
-import math
-import cv2
 from scipy.spatial.transform import Rotation
 from tqdm import tqdm
 import time
